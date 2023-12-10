@@ -4,14 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ExactMath;
 
-public readonly struct Integer : IEquatable<Integer>, IComparable<Integer> {
+public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<Integer> {
 	public static readonly Integer Zero = new(0), One = new(1), MinusOne = new(-1);
 
-	public long Value { get; }
-
-	public Integer(long value) {
-		Value = value;
-	}
+	public long Value { get; } = value;
 
 	public bool IsZero() => Value == 0;
 	public bool IsNegative() => Value < 0;
