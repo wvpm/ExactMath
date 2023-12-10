@@ -45,9 +45,6 @@ public readonly struct Root {
 	}
 
 	public Root RaiseTo(Fraction exponent) => new(Degree * exponent.Denominator, Radicand.RaiseTo(exponent.Numerator));
-	//public static Fraction operator -(Root a) => ;
-	//public static Fraction operator +(Root a, Root b) => ;
-	//public static Fraction operator -(Root a, Root b) => ;
 	public static Root operator *(Root a, Root b) => new(a.Degree * b.Degree, a.Radicand.RaiseTo(b.Degree) * b.Radicand.RaiseTo(a.Degree));
 	public static Root operator /(Root numerator, Root denominator) => numerator * new Root(-denominator.Degree, denominator.Radicand);
 	public static bool operator >(Root a, Root b) => a.CompareTo(b) > 0;
