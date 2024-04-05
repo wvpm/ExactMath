@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace ExactMath;
 
@@ -14,17 +15,17 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction> {
 	public Fraction(Integer numerator, Integer denominator) : this(numerator, denominator, true) { }
 
 	private Fraction(Integer numerator, Integer denominator, bool shouldSimplify) {
-		if (denominator.IsZero()) {
+		if (denominator.IsZero) {
 			throw new DivideByZeroException();
 		}
 
 		if (shouldSimplify) {
-			if (denominator.IsNegative()) {
+			if (denominator.IsNegative) {
 				numerator = -numerator;
 				denominator = -denominator;
 			}
 
-			long gcd = numerator.FindGreatestCommonDivisor(denominator);
+			BigInteger gcd = numerator.FindGreatestCommonDivisor(denominator);
 			if (gcd > 1) {
 				numerator = new(numerator.Value / gcd);
 				denominator = new(denominator.Value / gcd);
@@ -35,12 +36,12 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction> {
 		Denominator = denominator;
 	}
 
-	public bool IsZero() => Numerator.IsZero();
-	public Integer GetSign() => Numerator.GetSign() * Denominator.GetSign();
-	public bool IsNegative() => GetSign().IsNegative();
+	public bool IsZero { get => Numerator.IsZero; }
+	public Integer GetSign { get => Numerator.GetSign * Denominator.GetSign; }
+	public bool IsNegative { get => GetSign.IsNegative; }
 
 	public Fraction RaiseTo(Integer exponent) {
-		if (exponent.IsZero()) {
+		if (exponent.IsZero) {
 			return One;
 		}
 
@@ -49,12 +50,12 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction> {
 		}
 
 		if (this == MinusOne) {
-			return exponent.IsEven() ? One : MinusOne;
+			return exponent.IsEven ? One : MinusOne;
 		}
 
 		Integer numeratorPower = (Integer)Numerator.RaiseTo(exponent);
 		Integer denominatorPower = (Integer)Denominator.RaiseTo(exponent);
-		return exponent.IsNegative()
+		return exponent.IsNegative
 			? new(denominatorPower, numeratorPower)
 			: new(numeratorPower, denominatorPower);
 	}
@@ -105,24 +106,45 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction> {
 	/// Approximation
 	/// </summary>
 	/// <returns></returns>
-	public decimal ToDecimal() => 1M * Numerator.Value / Denominator.Value;
+	public bool TryCastDecimal([NotNullWhen(true)] out decimal? decimalValue) {
+		Integer quotientBig = DivideRemainder(out Fraction remainder);
+		if (!quotientBig.TryCastDecimal(out var quotient)
+			|| !remainder.Numerator.TryCastDecimal(out var numerator)
+			|| !remainder.Numerator.TryCastDecimal(out var denominator)) {
+			decimalValue = null;
+			return false;
+		}
+		decimalValue = quotient + numerator / denominator;
+		return true;
+	}
+
 	/// <summary>
 	/// Approximation
 	/// </summary>
 	/// <returns></returns>
-	public double ToDouble() => 1D * Numerator.Value / Denominator.Value;
+	public bool TryCastDouble([NotNullWhen(true)] out double? doubleValue) {
+		Integer quotientBig = DivideRemainder(out Fraction remainder);
+		if (!quotientBig.TryCastDouble(out var quotient)
+			|| !remainder.Numerator.TryCastDouble(out var numerator)
+			|| !remainder.Numerator.TryCastDouble(out var denominator)) {
+			doubleValue = null;
+			return false;
+		}
+		doubleValue = quotient + numerator / denominator;
+		return true;
+	}
 	public Integer DivideRemainder(out Fraction remainder) {
 		if (Denominator == Integer.One) {
 			remainder = Zero;
 			return Numerator;
 		}
 
-		if (Numerator.IsZero()) {
+		if (Numerator.IsZero) {
 			remainder = Zero;
 			return Integer.Zero;
 		}
 
-		if (Numerator.IsNegative()) {
+		if (Numerator.IsNegative) {
 			Integer whole = (-this).DivideRemainder(out remainder);
 			remainder = -remainder;
 			return -whole;

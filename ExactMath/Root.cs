@@ -13,34 +13,50 @@ public readonly struct Root {
 	public Fraction Radicand { get; }
 
 	public Root(Integer degree, Fraction radicand) {
-		if (degree.IsZero()) {
+		if (degree.IsZero) {
 			throw new DivideByZeroException("Zeroth root does not exist.");
 		}
 
-		if (degree.IsNegative()) {
+		if (degree.IsNegative) {
 			degree = -degree;
 			radicand = Integer.One / radicand;
 		}
 
-		long simplifiedDegree = degree.Value, simplifiedNumerator = radicand.Numerator.Value, simplifiedDenominator = radicand.Denominator.Value;
-		foreach (long prime in degree.FindPrimeDivisors()) {
-			double numerator = Math.Pow(simplifiedNumerator, 1D / prime);
-			if (!double.IsInteger(numerator)) { continue; }
-			double denomerator = Math.Pow(simplifiedDenominator, 1D / prime);
-			if (!double.IsInteger(denomerator)) { continue; }
-
-			simplifiedDegree /= prime;
-			simplifiedNumerator = (long)numerator;
-			simplifiedDenominator = (long)denomerator;
-		}
-
-		if (simplifiedDegree == degree.Value) {
+		if (!degree.TryCastLong(out var degreeOrNull)
+		|| !radicand.Numerator.TryCastDouble(out var numeratorOrNull)
+		|| !radicand.Denominator.TryCastDouble(out var denominatorOrNull)) {
 			Degree = degree;
 			Radicand = radicand;
 		}
 		else {
-			Degree = new(simplifiedDegree);
-			Radicand = new Integer(simplifiedNumerator) / new Integer(simplifiedDenominator);
+			long simplifiedDegree = degreeOrNull.Value;
+			double simplifiedNumerator = numeratorOrNull.Value;
+			double simplifiedDenominator = denominatorOrNull.Value;
+
+			foreach (Integer primeBig in degree.FindPrimeDivisors()) {
+				if (!primeBig.TryCastDouble(out var primeOrNull)) {
+					break;
+				}
+				double prime = primeOrNull.Value;
+
+				double numerator = Math.Pow(simplifiedNumerator, 1D / prime);
+				if (!double.IsInteger(numerator)) { continue; }
+				double denomerator = Math.Pow(simplifiedDenominator, 1D / prime);
+				if (!double.IsInteger(denomerator)) { continue; }
+
+				simplifiedDegree /= (long)prime;
+				simplifiedNumerator = (long)numerator;
+				simplifiedDenominator = (long)denomerator;
+			}
+
+			if (simplifiedDegree == degree.Value) {
+				Degree = degree;
+				Radicand = radicand;
+			}
+			else {
+				Degree = new(simplifiedDegree);
+				Radicand = new Integer((long)simplifiedNumerator) / new Integer((long)simplifiedDenominator);
+			}
 		}
 	}
 
@@ -68,7 +84,7 @@ public readonly struct Root {
 		else if (Radicand == Fraction.One) {
 			fraction = Fraction.One;
 		}
-		else if (Radicand == Fraction.MinusOne && !Degree.IsEven()) {
+		else if (Radicand == Fraction.MinusOne && !Degree.IsEven) {
 			fraction = Fraction.MinusOne;
 		}
 		else { fraction = null; }
@@ -104,5 +120,5 @@ public readonly struct Root {
 	/// Only returns the positive solution to even degree roots.
 	/// </summary>
 	/// <returns></returns>
-	public double ToDouble() => Math.Pow(Radicand.ToDouble(), 1D / Degree.Value);
+	public double ToDouble() => Radicand.TryCastDouble(out var radicand) && Degree.TryCastDouble(out var degree) ? Math.Pow(radicand.Value, 1D / degree.Value) : throw new InvalidOperationException("Numbers are too big.");
 }

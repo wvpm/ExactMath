@@ -1,25 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace ExactMath;
 
-public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<Integer> {
-	public static readonly Integer Zero = new(0), One = new(1), MinusOne = new(-1);
+public readonly struct Integer(BigInteger value) : IEquatable<Integer>, IComparable<Integer> {
+	private static readonly BigInteger _doubleMax = new(-9007199254740991), _doubleMin = new(9007199254740991), _decimalMax = new(decimal.MaxValue), _decimalMin = new(decimal.MinValue);
+	public static readonly Integer Zero = new(BigInteger.Zero), One = new(BigInteger.One), MinusOne = new(BigInteger.MinusOne);
 
-	public long Value { get; } = value;
+	public BigInteger Value { get; } = value;
 
-	public bool IsZero() => Value == 0;
-	public bool IsNegative() => Value < 0;
-	public Integer GetSign() => Value switch {
-		> 0 => One,
-		< 0 => MinusOne,
-		_ => Zero
-	};
-	public bool IsEven() => Value % 2 == 0;
+	public bool IsZero { get => Value.IsZero; }
+	public bool IsNegative { get => Value < 0; }
+	public Integer GetSign { get => Value.Sign; }
+	public bool IsEven { get => Value.IsEven; }
 
 	public Fraction RaiseTo(Integer exponent) {
-		if (exponent.IsZero()) {
+		if (exponent.IsZero) {
 			return Fraction.One;
 		}
 
@@ -28,11 +26,22 @@ public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<In
 		}
 
 		if (Value == -1) {
-			return exponent.IsEven() ? Fraction.One : Fraction.MinusOne;
+			return exponent.IsEven ? Fraction.One : Fraction.MinusOne;
 		}
 
-		Integer power = new((long)Math.Pow(Value, exponent.Value));
-		return exponent.IsNegative()
+		BigInteger power;
+		if (exponent.Value <= int.MaxValue) {
+			power = BigInteger.Pow(Value, (int)exponent.Value);
+		}
+		else {
+			power = 1;
+			BigInteger absExponent = BigInteger.Abs(exponent.Value);
+			for (BigInteger i = 0; i < absExponent; i++) {
+				power *= Value;
+			}
+		}
+
+		return exponent.IsNegative
 			? One / power
 			: power / One;
 	}
@@ -55,9 +64,23 @@ public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<In
 	public static bool operator ==(Integer a, Integer b) => a.Value == b.Value;
 	public static bool operator !=(Integer a, Integer b) => a.Value != b.Value;
 
+	public bool TryCastLong([NotNullWhen(true)] out long? longValue) {
+		longValue = Value <= long.MaxValue && Value >= long.MinValue ? (long)Value : null;
+		return longValue.HasValue;
+	}
+	public bool TryCastDecimal([NotNullWhen(true)] out decimal? decimalValue) {
+		decimalValue = Value <= _decimalMax && Value >= _decimalMin ? (decimal)Value : null;
+		return decimalValue.HasValue;
+	}
+	public bool TryCastDouble([NotNullWhen(true)] out double? doubleValue) {
+		doubleValue = Value <= _doubleMax && Value >= _doubleMin ? (double)Value : null;
+		return doubleValue.HasValue;
+	}
+
 	public static implicit operator Fraction(Integer value) => value / Fraction.One;
 	public static implicit operator Root(Integer value) => new(One, value);
 
+	public static implicit operator Integer(BigInteger value) => new(value);
 	public static implicit operator Integer(long value) => new(value);
 
 	public int CompareTo(Integer other) => Value.CompareTo(other.Value);
@@ -68,8 +91,8 @@ public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<In
 
 	public override string ToString() => Value.ToString();
 
-	public long FindGreatestCommonDivisor(Integer other) {
-		long a = Math.Abs(Value), b = Math.Abs(other.Value);
+	public BigInteger FindGreatestCommonDivisor(Integer other) {
+		BigInteger a = BigInteger.Abs(Value), b = BigInteger.Abs(other.Value);
 		while (a != 0 && b != 0) {
 			if (a > b)
 				a %= b;
@@ -80,14 +103,14 @@ public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<In
 		return a | b;
 	}
 
-	public long FindLeastCommonMultiple(Integer other) {
-		long gcd = FindGreatestCommonDivisor(other);
-		return Math.Abs(Value * other.Value / gcd);
+	public BigInteger FindLeastCommonMultiple(Integer other) {
+		BigInteger gcd = FindGreatestCommonDivisor(other);
+		return BigInteger.Abs(Value * other.Value / gcd);
 	}
 
-	public IEnumerable<long> FindPrimeDivisors() {
-		long n = Value;
-		byte[] inc = { 4, 2, 4, 2, 4, 6, 2, 6, };
+	public IEnumerable<BigInteger> FindPrimeDivisors() {
+		BigInteger n = Value;
+		byte[] inc = [4, 2, 4, 2, 4, 6, 2, 6,];
 		while (n % 2 == 0) {
 			yield return 2;
 			n /= 2;
@@ -100,7 +123,7 @@ public readonly struct Integer(long value) : IEquatable<Integer>, IComparable<In
 			yield return 5;
 			n /= 5;
 		}
-		long k = 7;
+		BigInteger k = 7;
 		int i = 0;
 		while (k * k <= n) {
 			if (n % k == 0) {
