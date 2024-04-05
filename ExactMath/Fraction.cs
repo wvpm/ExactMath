@@ -110,7 +110,7 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction> {
 		Integer quotientBig = DivideRemainder(out Fraction remainder);
 		if (!quotientBig.TryCastDecimal(out var quotient)
 			|| !remainder.Numerator.TryCastDecimal(out var numerator)
-			|| !remainder.Numerator.TryCastDecimal(out var denominator)) {
+			|| !remainder.Denominator.TryCastDecimal(out var denominator)) {
 			decimalValue = null;
 			return false;
 		}
@@ -126,7 +126,7 @@ public readonly struct Fraction : IEquatable<Fraction>, IComparable<Fraction> {
 		Integer quotientBig = DivideRemainder(out Fraction remainder);
 		if (!quotientBig.TryCastDouble(out var quotient)
 			|| !remainder.Numerator.TryCastDouble(out var numerator)
-			|| !remainder.Numerator.TryCastDouble(out var denominator)) {
+			|| !remainder.Denominator.TryCastDouble(out var denominator)) {
 			doubleValue = null;
 			return false;
 		}

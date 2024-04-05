@@ -30,8 +30,10 @@ foreach (FractionChain fA in f1) {
 }
 
 foreach (FractionChain fractionChain in f2.Where(x => x.Combined <= 4).OrderBy(x => x.Combined)) {
-	Console.Write($"{fractionChain.LeastCommonMultiple}\t{fractionChain.Combined.ToDecimal():N3}\t{fractionChain.Combined}\t");
-	Console.WriteLine(string.Join('\t', fractionChain.Factors));
+	if (fractionChain.Combined.TryCastDecimal(out var decimalValue)) {
+		Console.Write($"{fractionChain.LeastCommonMultiple}\t{decimalValue:N3}\t{fractionChain.Combined}\t");
+		Console.WriteLine(string.Join('\t', fractionChain.Factors));
+	}
 }
 
 Console.ReadLine();
