@@ -14,15 +14,15 @@ for (int i = 1; i <= limit; i++) {
 	}
 }
 
-HashSet<FractionChain> f1 = new();
+HashSet<FractionChain> f1 = [];
 foreach (Fraction fA in f0) {
 	foreach (Fraction fB in f0) {
-		FractionChain fractionChain = new(new[] { fA, fB });
+		FractionChain fractionChain = new([fA, fB]);
 		f1.Add(fractionChain);
 	}
 }
 
-HashSet<FractionChain> f2 = new();
+HashSet<FractionChain> f2 = [];
 foreach (FractionChain fA in f1) {
 	foreach (Fraction fB in f0) {
 		f2.Add(fA * fB);
